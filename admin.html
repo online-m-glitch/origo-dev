@@ -577,7 +577,7 @@ tr:hover td{background:#fafbfc;}
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Tipo</th><th>SKU</th><th>Producto</th><th>Cantidad</th><th>Costo unit.</th><th>Precio ML</th><th>Total</th><th>Obs.</th><th></th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Tipo</th><th>SKU</th><th>Producto</th><th>Cantidad</th><th>Costo unit.</th><th>Recibí ML ($)</th><th>Resultado ($)</th><th>Obs.</th><th></th></tr></thead>
               <tbody id="movimientosBody"></tbody>
             </table>
             <div class="empty" id="movEmpty" style="display:none;"><div class="icon">↕️</div><p>Sin movimientos registrados.</p></div>
@@ -1904,8 +1904,14 @@ function renderMovimientos(buscar){
       <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.producto)}</td>
       <td class="num">${impacto}${m.cantidad}</td>
       <td class="num">$${fmt(m.costo)}</td>
-      <td class="num">$${fmt(m.precio)}</td>
-      <td class="num">$${fmt(m.costo*m.cantidad)}</td>
+      <td class="num">${m.tipo==='Venta'?'$'+fmt(m.totalNeto||m.precio):'-'}</td>
+      <td class="num ${m.tipo==='Venta'?((m.totalNeto||m.precio*m.cantidad)>m.costo*m.cantidad?'num-pos':'num-neg'):''}">${
+        m.tipo==='Venta'
+          ? '$'+fmt((m.totalNeto||m.precio*m.cantidad) - m.costo*m.cantidad)
+          : m.tipo==='Ingreso'
+            ? '-$'+fmt(m.costo*m.cantidad)
+            : '-'
+      }</td>
       <td style="color:var(--text-soft);font-size:12px;">${esc(m.obs||"")}</td>
       <td>${esAdmin()?`<button class="btn btn-danger btn-sm" onclick="eliminarMovimiento(${idx})">✕</button>`:""}</td>
     </tr>`;
