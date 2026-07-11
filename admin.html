@@ -3773,12 +3773,26 @@ function procesarTextoFullML(){
     if(sku.length >= 2) skusEncontrados.push(sku);
   }
 
-  // 2. Extraer unidades (número inmediatamente después de "obligatorio")
-  const unidRegex = /obligatorio[\s]*(\d{1,4})(?:[\s]|$|[A-Z])/g;
+  // 2. Extraer unidades — PDF.js pone todos los números juntos DESPUÉS de
+  // "INSTRUCCIONES DE PREPARACIÓN" (puede aparecer 1 o 2 veces por páginas)
   const unidsEncontradas = [];
-  while((m = unidRegex.exec(texto)) !== null){
-    const n = parseInt(m[1]);
-    if(n > 0 && n < 5000) unidsEncontradas.push(n);
+  const instrRegex = /INSTRUCCIONES\s+DE\s+PREPARACI[ÓO]N\s+([\d\s]+)/g;
+  let instrM;
+  while((instrM = instrRegex.exec(texto)) !== null){
+    const nums = instrM[1].match(/\d+/g)||[];
+    for(const n of nums){
+      const num = parseInt(n);
+      if(num > 0 && num < 5000) unidsEncontradas.push(num);
+    }
+  }
+
+  // Fallback: si no encuentra por ese método, buscar después de "obligatorio"
+  if(!unidsEncontradas.length){
+    const unidRegex = /obligatorio[\s]*(\d{1,4})(?:[\s]|$|[A-Z])/g;
+    while((m = unidRegex.exec(texto)) !== null){
+      const n = parseInt(m[1]);
+      if(n > 0 && n < 5000) unidsEncontradas.push(n);
+    }
   }
 
   // 3. Emparejar por índice, evitar duplicados
