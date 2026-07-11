@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ORIGO DEV — Panel de Administración</title>
+<title>ORIGO — Panel de Administración</title>
 <style>
 /* ========== TOKENS ========== */
 :root{
@@ -332,7 +332,7 @@ tr:hover td{background:#fafbfc;}
   <!-- Sidebar -->
   <nav class="sidebar">
     <div class="sidebar-brand">
-      <div class="name">ORIGO <span style="font-size:9px;background:var(--ml-yellow);color:#0d2259;padding:1px 5px;border-radius:3px;">DEV</span></div>
+      <div class="name">ORIGO</div>
       <div class="sub">MercadoLibre</div>
     </div>
     <div class="nav-section">Principal</div>
@@ -385,7 +385,7 @@ tr:hover td{background:#fafbfc;}
     <!-- Mobile top bar -->
     <div class="mobile-bar">
       <button onclick="openSidebar()">☰</button>
-      <div class="m-brand">ORIGO <span style="font-size:10px;background:#f5c400;color:#0d2259;padding:1px 6px;border-radius:4px;vertical-align:middle;">DEV</span></div>
+      <div class="m-brand">ORIGO</div>
     </div>
 
     <!-- ========== PANEL ========== -->
@@ -1278,8 +1278,8 @@ tr:hover td{background:#fafbfc;}
 const PASS_ADMIN = "origo2026";
 const PASS_VIEWER = "origo2025";
 let rolActual = ""; // "admin" o "viewer"
-const SB_URL = "https://edbxllsuqcrvvizntxlv.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkYnhsbHN1cWNydnZpem50eGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3ODU2NjIsImV4cCI6MjA5OTM2MTY2Mn0.5O4MJKfWYbZSTNyFqJNmpSBO9X7drBNvBB5z_gr2li0";
+const SB_URL = "https://piqkwewxbjumyqwtmnxn.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcWt3ZXd4Ymp1bXlxd3RtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NTcxODAsImV4cCI6MjA5NzEzMzE4MH0.bye19z4vBriLwqvswMfhF3P5BJAVa2_Cxzn08Tg091I";
 
 async function sbGet(table, params){
   params = params||"";
@@ -3760,76 +3760,45 @@ function procesarTextoFullML(){
 
   fullMLLineas = [];
 
-  // Parsear el texto del PDF de ML Full
-  // Formato: "SKU: PR2" y unidades como número solo en línea o seguido del SKU
-  // Estrategia: buscar bloques con SKU: XXX y número de unidades cercano
+  // El PDF de ML Full linearizado por PDF.js tiene el formato:
+  // "SKU: PR5 PLUS Protector De... Etiquetado obligatorio 5 Código ML:..."
+  // Extraemos todos los SKU y todos los números post-"obligatorio" y los emparejamos por posición
 
-  // El PDF tiene líneas como:
-  // "Código ML: XXXXX Código universal: XXXXX SKU: PR2"
-  // seguido de texto del producto
-  // y la columna unidades "30"
-
-  // Extraer todos los SKU con sus unidades usando regex
-  const lines = texto.split(/[\n\r]+/);
-  // SKU pattern defined inline below
-
-  const numInlinePattern = /(\d+)\s*(?:•|$)/;
-
-  let currentSku = null;
-  let currentNombre = "";
-
-  // Primera pasada: extraer pares SKU-unidades
-  // El PDF tiene estructura: bloque de producto | número unidades | Etiquetado...
-  // Vamos a extraer todos los SKU y buscar el número más cercano
-
-  const skus = [];
-  for(let i=0;i<lines.length;i++){
-    const line = lines[i].trim();
-    const skuM = line.match(/SKU:\s*([A-Z0-9][A-Z0-9 \-\.\/+]*?)(?:\s*(?:Código|Etiquetado|$))/i);
-    if(skuM){
-      const sku = skuM[1].trim().replace(/\s+/g," ");
-      // Buscar número de unidades: buscar hacia atrás y adelante en ventana de 5 líneas
-      let unidades = 0;
-      for(let j=Math.max(0,i-5);j<Math.min(lines.length,i+6);j++){
-        const m = lines[j].trim().match(/^\s*(\d{1,4})\s*$/);
-        if(m && parseInt(m[1])>0 && parseInt(m[1])<10000){
-          // Verificar que no sea un código largo
-          if(m[1].length<=4){ unidades=parseInt(m[1]); break; }
-        }
-      }
-      // Extraer nombre: líneas siguientes hasta próximo "Código ML" o "Etiquetado"
-      let nombre = "";
-      for(let j=i+1;j<Math.min(lines.length,i+4);j++){
-        const l2=lines[j].trim();
-        if(!l2||l2.match(/^Código ML:|^Etiquetado|^\d+$/)) break;
-        if(l2.length>3) nombre+=l2+" ";
-      }
-      skus.push({ sku, unidades, nombre:nombre.trim() });
-    }
+  // 1. Extraer SKUs
+  const skuRegex = /SKU:\s*([A-Z0-9][A-Z0-9 \-\.\/+]*?)(?=\s+[A-ZÁÉÍÓÚ][a-záéíóúñ]{2,}|\s+Etiquetado|\s*$)/g;
+  const skusEncontrados = [];
+  let m;
+  while((m = skuRegex.exec(texto)) !== null){
+    const sku = m[1].trim().replace(/\s+/g," ");
+    if(sku.length >= 2) skusEncontrados.push(sku);
   }
 
-  // Eliminar duplicados de SKU (quedarse con el que tiene unidades)
-  const skuMap = {};
-  for(const s of skus){
-    if(!skuMap[s.sku]||(s.unidades>0&&!skuMap[s.sku].unidades)){
-      skuMap[s.sku]=s;
-    }
+  // 2. Extraer unidades (número inmediatamente después de "obligatorio")
+  const unidRegex = /obligatorio[\s]*(\d{1,4})(?:[\s]|$|[A-Z])/g;
+  const unidsEncontradas = [];
+  while((m = unidRegex.exec(texto)) !== null){
+    const n = parseInt(m[1]);
+    if(n > 0 && n < 5000) unidsEncontradas.push(n);
   }
 
-  for(const [sku,data] of Object.entries(skuMap)){
-    if(!sku||sku.length<2) continue;
-    const prod = productos.find(p=>p.sku.toUpperCase()===sku.toUpperCase().trim());
+  // 3. Emparejar por índice, evitar duplicados
+  const vistos = new Set();
+  for(let i = 0; i < skusEncontrados.length; i++){
+    const sku = skusEncontrados[i];
+    if(vistos.has(sku)) continue;
+    vistos.add(sku);
+    const unidades = unidsEncontradas[i] || 0;
+    const prod = productos.find(p => p.sku.toUpperCase() === sku.toUpperCase());
     fullMLLineas.push({
-      sku: sku.trim(),
-      unidades: data.unidades||0,
-      nombrePDF: data.nombre,
-      producto: prod?prod.nombre:"",
+      sku, unidades,
+      nombrePDF: "",
+      producto: prod ? prod.nombre : "",
       enCatalogo: !!prod,
       incluir: true
     });
   }
 
-  if(!fullMLLineas.length){ toast("No se encontraron SKU en el texto.","err"); return; }
+  if(!fullMLLineas.length){ toast("No se encontraron SKU en el texto. Asegurate de copiar todo el PDF.","err"); return; }
   renderFullMLPreview();
 }
 
