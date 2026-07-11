@@ -887,7 +887,7 @@ tr:hover td{background:#fafbfc;}
                 </div>
                 <div class="table-wrap" style="max-height:400px;overflow-y:auto;">
                   <table>
-                    <thead><tr><th>Fecha</th><th>SKU</th><th>Título ML</th><th>Cant.</th><th>Precio unit. ($)</th><th>Ingreso ($)</th><th>Neto ($)</th><th>Estado</th><th>Producto catálogo</th><th>✓</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>SKU</th><th>Título ML</th><th>Cant.</th><th>Precio unit. ($)</th><th>Ingreso por venta ($)</th><th>Recibí ($)</th><th>Estado</th><th>Producto catálogo</th><th>✓</th></tr></thead>
                     <tbody id="mlPreviewBody"></tbody>
                   </table>
                 </div>
@@ -957,7 +957,7 @@ tr:hover td{background:#fafbfc;}
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Fecha</th><th>Canal</th><th>SKU</th><th>Producto</th><th>Cant.</th><th>Precio unit. ($)</th><th>Ingreso ($)</th><th>Neto ($)</th><th>Obs.</th><th></th></tr></thead>
+                <thead><tr><th>Fecha</th><th>Canal</th><th>SKU</th><th>Producto</th><th>Cant.</th><th>Ingreso por venta ($)</th><th>Recibí ($)</th><th>Obs.</th><th></th></tr></thead>
                 <tbody id="ventasBody"></tbody>
               </table>
               <div class="empty" id="ventasEmpty" style="display:none;"><div class="icon">💸</div><p>Sin ventas registradas todavía.</p></div>
@@ -2798,7 +2798,7 @@ function renderVentas(){
       <td style="max-width:180px;">${esc(v.producto||'')}</td>
       <td class="num">${v.cantidad}</td>
       <td class="num">$${fmt(v.precio)}</td>
-      <td class="num" style="font-weight:700;">$${fmt(v.cantidad*v.precio)}</td>
+      <td class="num num-pos" style="font-weight:700;" title="Lo que quedó después de comisiones ML">$${fmt(v.totalNeto||v.ingresoBruto||v.cantidad*v.precio)}</td>
       <td style="font-size:12px;color:var(--text-soft);">${esc(v.obs||'')}</td>
       <td>${esAdmin()?`<button class="btn btn-danger btn-sm" onclick="eliminarVenta(${realIdx})">✕</button>`:""}</td>
     </tr>`;
@@ -2810,7 +2810,7 @@ function renderVentas(){
   const unidML=ventas.filter(v=>v.canal==='ML').reduce((a,v)=>a+v.cantidad,0);
   const unidTienda=ventas.filter(v=>v.canal==='Tienda').reduce((a,v)=>a+v.cantidad,0);
   document.getElementById('ventasStats').innerHTML=`
-    <div class="stat-card"><div class="label">Total ventas ML</div><div class="value blue">$${fmt(totalML)}</div></div>
+    <div class="stat-card"><div class="label">Ingreso neto ML</div><div class="value blue">$${fmt(totalML)}</div></div>
     <div class="stat-card"><div class="label">Unid. vendidas ML</div><div class="value">${unidML}</div></div>
     <div class="stat-card"><div class="label">Total ventas Tienda</div><div class="value green">$${fmt(totalTienda)}</div></div>
     <div class="stat-card"><div class="label">Unid. vendidas Tienda</div><div class="value">${unidTienda}</div></div>
