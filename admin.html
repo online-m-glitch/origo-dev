@@ -395,6 +395,7 @@ tr:hover td{background:#fafbfc;}
           <h2>Panel de Control</h2>
           <div class="sub" id="panelFecha"></div>
         </div>
+        <button class="btn btn-ghost btn-sm" onclick="recargarTodo()" title="Recargar datos desde Supabase">🔄 Actualizar datos</button>
       </div>
       <div style="padding:24px;">
         <div class="stats-grid" id="panelStats"></div>
@@ -2288,13 +2289,18 @@ function eliminarCompra(idx){
 // ================================================================
 // NAVEGACIÓN
 // ================================================================
-function mostrarSeccion(id){
+async function mostrarSeccion(id){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   document.getElementById("sec-"+id).classList.add("active");
   event.currentTarget.classList.add("active");
   if(window.innerWidth<=768) closeSidebar();
-  // Refrescar la sección activa
+
+  // Recargar datos frescos desde Supabase al cambiar de sección
+  await cargarDatos();
+  actualizarProvLists(); actualizarSkuList(); actualizarSkuListCompras();
+
+  // Renderizar la sección activa
   if(id==="panel") renderPanel();
   if(id==="stock") renderStock();
   if(id==="alertas") renderAlertas();
@@ -3901,6 +3907,17 @@ async function confirmarImportFullML(){
 document.getElementById("modalFullML").addEventListener("click", function(e){
   if(e.target===e.currentTarget) cerrarModalFullML();
 });
+
+
+// ── Recargar todos los datos desde Supabase ──
+async function recargarTodo(){
+  await cargarDatos();
+  actualizarProvLists(); actualizarSkuList(); actualizarSkuListCompras();
+  renderPanel(); renderProductos(); renderStock(); renderAlertas();
+  renderMovimientos(); renderCC(); renderCompras(); renderVentas();
+  renderAnalisis(); renderPedidos();
+  toast("✅ Datos actualizados desde Supabase","ok",3000);
+}
 
 // ── Sidebar mobile ──
 function openSidebar(){
